@@ -47,7 +47,7 @@ public class ItemListener implements Listener {
         event.setCancelled(true);
 
         // hotbarService lấy item theo itemstack
-        Item clickedItem = Neptune.get().getHotbarService().getItem(player, event.getItem());
+        Item clickedItem = dev.lrxh.neptune.feature.hotbar.HotbarService.get().getItem(player, event.getItem());
         if (clickedItem == null) {
             return;
         }
