@@ -1,6 +1,7 @@
 package dev.lrxh.neptune.feature.hotbar.listener;
 
 import dev.lrxh.neptune.API;
+import dev.lrxh.neptune.Neptune;
 import dev.lrxh.neptune.feature.hotbar.impl.CustomItem;
 import dev.lrxh.neptune.feature.hotbar.impl.Item;
 import dev.lrxh.neptune.game.match.impl.MatchState;
@@ -14,6 +15,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
+import java.util.List;
+
 public class ItemListener implements Listener {
 
     @EventHandler
@@ -21,7 +24,7 @@ public class ItemListener implements Listener {
 
         Action action = event.getAction();
         Player player = event.getPlayer();
-        Profile profile = API.getInstance().getProfileService().get(player.getUniqueId());
+        Profile profile = API.getProfile(player.getUniqueId());
 
         if (event.getItem() == null || event.getItem().getType() == Material.AIR) {
             return;
@@ -32,7 +35,8 @@ public class ItemListener implements Listener {
             return;
         }
 
-        if (profile.isOnCooldown("hotbar")) {
+        // cooldown check theo Profile gốc
+        if (!profile.hasCooldownEnded("hotbar")) {
             return;
         }
 
@@ -42,32 +46,33 @@ public class ItemListener implements Listener {
 
         event.setCancelled(true);
 
-        Item clickedItem = API.getInstance().getHotbarService().getItem(player, event.getItem());
-
+        // hotbarService lấy item theo itemstack
+        Item clickedItem = Neptune.get().getHotbarService().getItem(player, event.getItem());
         if (clickedItem == null) {
             return;
         }
 
         /*
-         * Prevent using items while in match and not in playing state
+         * Prevent using items while in match and not in a playing phase (theo enum MatchState gốc)
          */
-        if (profile.getState() == ProfileState.FIGHTING) {
-            if (profile.getMatch() != null && profile.getMatch().getState() != MatchState.PLAYING) {
+        if (profile.getState() == ProfileState.IN_GAME) {
+            if (profile.getMatch() != null && profile.getMatch().getState() != MatchState.IN_ROUND) {
                 return;
             }
         }
 
         /*
-         * Custom command handler
+         * ✅ Custom command handler (new)
          */
         if (clickedItem instanceof CustomItem) {
             CustomItem customItem = (CustomItem) clickedItem;
+            List<String> commands = customItem.getCommands();
 
-            if (customItem.getCommands() == null || customItem.getCommands().isEmpty()) {
+            if (commands == null || commands.isEmpty()) {
                 return;
             }
 
-            for (String command : customItem.getCommands()) {
+            for (String command : commands) {
                 if (command == null) continue;
 
                 command = command.trim();
@@ -80,9 +85,11 @@ public class ItemListener implements Listener {
                 player.performCommand(command);
             }
         } else {
+            // default items vẫn chạy action như cũ
             clickedItem.getAction().execute(player);
         }
 
+        // set cooldown như cũ
         profile.addCooldown("hotbar", 200);
     }
 }
