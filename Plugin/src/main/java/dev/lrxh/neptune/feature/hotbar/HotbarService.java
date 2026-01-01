@@ -98,7 +98,31 @@ public class HotbarService extends IService {
                 }
             }
         }
-        if (config.getConfigurationSection("CUSTOM_ITEMS") != null) {
+        
+        // Dynamic custom-command items inside ITEMS.IN_LOBBY (so you can add entries under that section)
+        if (config.getConfigurationSection("ITEMS.IN_LOBBY") != null) {
+            for (String itemName : getKeys("ITEMS.IN_LOBBY")) {
+                String path = "ITEMS.IN_LOBBY." + itemName + ".";
+                if (config.get(path + "COMMAND") == null) continue;
+
+                String displayName = config.getString(path + "NAME");
+                String material = config.getString(path + "MATERIAL");
+                byte slot = (byte) config.getInt(path + "SLOT");
+                List<String> lore = config.getStringList(path + "LORE");
+                int customModelData = config.getInt(path + "CUSTOM_MODEL_DATA", 0);
+                boolean enabled = config.getBoolean(path + "ENABLED", true);
+                if (!enabled) continue;
+
+                List<String> commands = config.isList(path + "COMMAND")
+                        ? config.getStringList(path + "COMMAND")
+                        : java.util.Arrays.asList(config.getString(path + "COMMAND", "none"));
+
+                CustomItem customItem = new CustomItem(displayName, material, lore, slot, commands, customModelData);
+                items.get(ProfileState.IN_LOBBY).addItem(customItem, slot);
+            }
+        }
+
+if (config.getConfigurationSection("CUSTOM_ITEMS") != null) {
             for (String itemName : getKeys("CUSTOM_ITEMS")) {
                 String path = "CUSTOM_ITEMS." + itemName + ".";
 
@@ -106,11 +130,11 @@ public class HotbarService extends IService {
                 String material = config.getString(path + "MATERIAL");
                 byte slot = (byte) config.getInt(path + "SLOT");
                 List<String> lore = config.getStringList(path + "LORE");
-                String command = config.getString(path + "COMMAND");
+                List<String> commands = config.isList(path + "COMMAND") ? config.getStringList(path + "COMMAND") : java.util.Arrays.asList(config.getString(path + "COMMAND", "none"));
                 ProfileState profileState = ProfileState.valueOf(config.getString(path + "STATE"));
                 int customModelData = config.getInt(path + "CUSTOM_MODEL_DATA", 0);
 
-                CustomItem customItem = new CustomItem(displayName, material, lore, slot, command, customModelData);
+                CustomItem customItem = new CustomItem(displayName, material, lore, slot, commands, customModelData);
                 items.get(profileState).addItem(customItem, slot);
             }
         }
