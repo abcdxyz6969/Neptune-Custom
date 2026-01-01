@@ -3,7 +3,7 @@ version: '2.1.0'
 main: dev.lrxh.neptune.Neptune
 api-version: '1.21.6'
 
-description: Neptune - Practice Core
+description: Neptune - Practice Cores
 
 #libraries:
 #  - org.mongodb:mongodb-driver-sync:4.11.1
