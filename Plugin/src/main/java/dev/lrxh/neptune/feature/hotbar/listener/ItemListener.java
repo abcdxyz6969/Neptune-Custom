@@ -14,39 +14,70 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 
-
 public class ItemListener implements Listener {
 
     @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
+    public void onInteract(PlayerInteractEvent event) {
+
+        Action action = event.getAction();
         Player player = event.getPlayer();
-        Profile profile = API.getProfile(player);
-        if (profile.getMatch() != null
-                && profile.getMatch().getState().equals(MatchState.IN_ROUND)
-                && profile.getState() != ProfileState.IN_SPECTATOR) {
+        Profile profile = API.getInstance().getProfileService().get(player.getUniqueId());
+
+        if (event.getItem() == null || event.getItem().getType() == Material.AIR) {
             return;
         }
-        if (player.getGameMode().equals(GameMode.CREATIVE)) return;
 
-        if (profile.getState() == ProfileState.IN_CUSTOM) return;
+        if (!(action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK
+                || action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK)) {
+            return;
+        }
+
+        if (profile.isOnCooldown("hotbar")) {
+            return;
+        }
+
+        if (player.getGameMode() == GameMode.CREATIVE) {
+            return;
+        }
 
         event.setCancelled(true);
 
-        if (event.getItem() == null) return;
-        if (event.getItem().getType().equals(Material.AIR)) return;
-        if (!(event.getAction().equals(Action.RIGHT_CLICK_AIR) || event.getAction().equals(Action.RIGHT_CLICK_BLOCK)))
+        Item clickedItem = API.getInstance().getHotbarService().getItem(player, event.getItem());
+
+        if (clickedItem == null) {
             return;
+        }
 
-        Item clickedItem = Item.getByItemStack(profile.getState(), event.getItem(), player.getUniqueId());
-        if (clickedItem == null) return;
+        /*
+         * Prevent using items while in match and not in playing state
+         */
+        if (profile.getState() == ProfileState.FIGHTING) {
+            if (profile.getMatch() != null && profile.getMatch().getState() != MatchState.PLAYING) {
+                return;
+            }
+        }
 
-        if (!profile.hasCooldownEnded("hotbar")) return;
+        /*
+         * Custom command handler
+         */
+        if (clickedItem instanceof CustomItem) {
+            CustomItem customItem = (CustomItem) clickedItem;
 
+            if (customItem.getCommands() == null || customItem.getCommands().isEmpty()) {
+                return;
+            }
 
-        if (clickedItem instanceof CustomItem customItem) {
-            String command = customItem.getCommand();
-            if (!command.equalsIgnoreCase("none")) {
-                player.performCommand(customItem.getCommand());
+            for (String command : customItem.getCommands()) {
+                if (command == null) continue;
+
+                command = command.trim();
+                if (command.isEmpty() || command.equalsIgnoreCase("none")) continue;
+
+                if (command.startsWith("/")) {
+                    command = command.substring(1);
+                }
+
+                player.performCommand(command);
             }
         } else {
             clickedItem.getAction().execute(player);
