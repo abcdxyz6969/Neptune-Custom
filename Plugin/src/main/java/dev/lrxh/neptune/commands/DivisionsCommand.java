@@ -1,26 +1,13 @@
-package dev.lrxh.neptune.commands;
+package dev.lrxh.neptune.feature.divisions.command;
 
+import com.jonahseguin.drink.annotation.Command;
 import dev.lrxh.neptune.feature.divisions.menu.DivisionsMenu;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class DivisionsCommand implements CommandExecutor {
+public class DivisionsCommand {
 
-    @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("Only players can use this command.");
-            return true;
-        }
-
-        Player player = (Player) sender;
-
-        // ✅ Open divisions menu
+    @Command(name = "", desc = "Open divisions menu")
+    public void divisions(Player player) {
         new DivisionsMenu().open(player);
-
-        return true;
     }
 }
