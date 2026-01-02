@@ -4,6 +4,7 @@ import dev.lrxh.neptune.API;
 import dev.lrxh.neptune.Neptune;
 import dev.lrxh.neptune.feature.hotbar.impl.CustomItem;
 import dev.lrxh.neptune.feature.hotbar.impl.Item;
+import dev.lrxh.neptune.feature.hotbar.HotbarService;
 import dev.lrxh.neptune.game.match.impl.MatchState;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
@@ -47,7 +48,7 @@ public class ItemListener implements Listener {
         event.setCancelled(true);
 
         // hotbarService lấy item theo itemstack
-        Item clickedItem = dev.lrxh.neptune.feature.hotbar.HotbarService.get().getItem(player, event.getItem());
+        Item clickedItem = HotbarService.get().getItem(player, event.getItem());
         if (clickedItem == null) {
             return;
         }
