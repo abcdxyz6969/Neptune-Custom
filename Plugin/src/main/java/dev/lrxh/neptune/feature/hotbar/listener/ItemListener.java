@@ -1,10 +1,10 @@
 package dev.lrxh.neptune.feature.hotbar.listener;
 
 import dev.lrxh.neptune.API;
-import dev.lrxh.neptune.Neptune;
-import dev.lrxh.neptune.feature.hotbar.impl.CustomItem;
-import dev.lrxh.neptune.feature.hotbar.impl.Item;
 import dev.lrxh.neptune.feature.hotbar.HotbarService;
+import dev.lrxh.neptune.feature.hotbar.impl.CustomItem;
+import dev.lrxh.neptune.feature.hotbar.impl.Hotbar;
+import dev.lrxh.neptune.feature.hotbar.impl.Item;
 import dev.lrxh.neptune.game.match.impl.MatchState;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
@@ -25,7 +25,7 @@ public class ItemListener implements Listener {
 
         Action action = event.getAction();
         Player player = event.getPlayer();
-        Profile profile = API.getProfile(player.getUniqueId());
+        Profile profile = API.getProfile(player);
 
         if (event.getItem() == null || event.getItem().getType() == Material.AIR) {
             return;
@@ -36,7 +36,6 @@ public class ItemListener implements Listener {
             return;
         }
 
-        // cooldown check theo Profile gốc
         if (!profile.hasCooldownEnded("hotbar")) {
             return;
         }
@@ -47,14 +46,20 @@ public class ItemListener implements Listener {
 
         event.setCancelled(true);
 
-        // hotbarService lấy item theo itemstack
-        Item clickedItem = HotbarService.get().getItem(player, event.getItem());
+        // ✅ Lấy Hotbar theo state
+        Hotbar hotbar = HotbarService.get().getItems().get(profile.getState());
+        if (hotbar == null) return;
+
+        // ✅ Lấy item theo slot hiện tại
+        int slot = player.getInventory().getHeldItemSlot();
+        Item clickedItem = HotbarService.get().getItemForSlot(hotbar, slot);
+
         if (clickedItem == null) {
             return;
         }
 
         /*
-         * Prevent using items while in match and not in a playing phase (theo enum MatchState gốc)
+         * Prevent using items while in match and not in a playing phase
          */
         if (profile.getState() == ProfileState.IN_GAME) {
             if (profile.getMatch() != null && profile.getMatch().getState() != MatchState.IN_ROUND) {
@@ -86,11 +91,9 @@ public class ItemListener implements Listener {
                 player.performCommand(command);
             }
         } else {
-            // default items vẫn chạy action như cũ
             clickedItem.getAction().execute(player);
         }
 
-        // set cooldown như cũ
         profile.addCooldown("hotbar", 200);
     }
 }
