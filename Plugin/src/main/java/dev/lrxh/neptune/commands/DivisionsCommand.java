@@ -1,4 +1,4 @@
-package dev.lrxh.neptune.feature.divisions.command;
+package dev.lrxh.neptune.commands;
 
 import com.jonahseguin.drink.annotation.Command;
 import dev.lrxh.neptune.feature.divisions.menu.DivisionsMenu;
