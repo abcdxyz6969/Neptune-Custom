@@ -5,6 +5,7 @@ import dev.lrxh.neptune.feature.hotbar.HotbarService;
 import dev.lrxh.neptune.feature.hotbar.impl.CustomItem;
 import dev.lrxh.neptune.feature.hotbar.impl.Hotbar;
 import dev.lrxh.neptune.feature.hotbar.impl.Item;
+import dev.lrxh.neptune.game.match.impl.MatchState;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
 import org.bukkit.GameMode;
@@ -28,9 +29,13 @@ public class ItemListener implements Listener {
         if (event.getItem() == null || event.getItem().getType() == Material.AIR) return;
         if (!(action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK)) return;
         if (player.getGameMode() == GameMode.CREATIVE) return;
-
         if (!profile.hasCooldownEnded("hotbar")) return;
-        if (profile.getState() == ProfileState.IN_GAME) return;
+
+        if (profile.getState() == ProfileState.IN_GAME) {
+            if (profile.getMatch() != null && profile.getMatch().getState() == MatchState.IN_ROUND) {
+                return;
+            }
+        }
 
         event.setCancelled(true);
 
