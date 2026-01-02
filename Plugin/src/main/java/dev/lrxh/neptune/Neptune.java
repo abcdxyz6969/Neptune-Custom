@@ -10,6 +10,7 @@ import dev.lrxh.blockChanger.BlockChanger;
 import dev.lrxh.neptune.cache.Cache;
 import dev.lrxh.neptune.commands.FollowCommand;
 import dev.lrxh.neptune.commands.LeaveCommand;
+import dev.lrxh.neptune.feature.divisions.command.DivisionsCommand;
 import dev.lrxh.neptune.configs.ConfigService;
 import dev.lrxh.neptune.configs.impl.ScoreboardLocale;
 import dev.lrxh.neptune.configs.impl.SettingsLocale;
@@ -211,6 +212,7 @@ public final class Neptune extends JavaPlugin {
         drink.register(new CosmeticsCommand(), "cosmetics");
         drink.register(new MatchHistoryCommand(), "matchhistory").setDefaultCommandIsHelp(true);
         drink.register(new QuickQueueCommand(), "quickqueue");
+        drink.register(new DivisionsCommand(), "divisions", "division");
         drink.registerCommands();
     }
 
