@@ -3,6 +3,7 @@ package dev.lrxh.neptune.feature.hotbar.listener;
 import dev.lrxh.neptune.API;
 import dev.lrxh.neptune.feature.hotbar.HotbarService;
 import dev.lrxh.neptune.feature.hotbar.impl.CustomItem;
+import dev.lrxh.neptune.feature.hotbar.impl.Hotbar;
 import dev.lrxh.neptune.feature.hotbar.impl.Item;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
@@ -29,12 +30,15 @@ public class ItemListener implements Listener {
         if (player.getGameMode() == GameMode.CREATIVE) return;
 
         if (!profile.hasCooldownEnded("hotbar")) return;
-
         if (profile.getState() == ProfileState.IN_GAME) return;
 
         event.setCancelled(true);
 
-        Item clickedItem = HotbarService.get().getItem(player, event.getItem());
+        Hotbar hotbar = HotbarService.get().getItems().get(profile.getState());
+        if (hotbar == null) return;
+
+        int slot = player.getInventory().getHeldItemSlot();
+        Item clickedItem = HotbarService.get().getItemForSlot(hotbar, slot);
         if (clickedItem == null) return;
 
         if (clickedItem instanceof CustomItem) {
