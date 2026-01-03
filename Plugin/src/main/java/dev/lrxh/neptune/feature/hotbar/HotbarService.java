@@ -182,34 +182,6 @@ public class HotbarService extends IService {
         return filtered;
     }
 
-    private List<String> getConsoleCommands(FileConfiguration config, String basePath) {
-    List<String> commands = new ArrayList<>();
-
-    String cmdPath = basePath + "CONSOLE_COMMAND";
-
-    if (config.isString(cmdPath)) {
-        String cmd = config.getString(cmdPath);
-        if (cmd != null) {
-            cmd = cmd.trim();
-            if (!cmd.isEmpty() && !cmd.equalsIgnoreCase("none")) {
-                commands.add(cmd);
-            }
-        }
-    } else if (config.isList(cmdPath)) {
-        List<String> list = config.getStringList(cmdPath);
-        for (String cmd : list) {
-            if (cmd == null) continue;
-            cmd = cmd.trim();
-            if (cmd.isEmpty()) continue;
-            if (cmd.equalsIgnoreCase("none")) continue;
-            commands.add(cmd);
-        }
-    }
-    
-    return commands;
-}
-
-
     // ✅ Read COMMAND:
     // - COMMAND: "queues"
     // - COMMAND:
