@@ -8,6 +8,7 @@ import dev.lrxh.neptune.feature.hotbar.impl.Item;
 import dev.lrxh.neptune.game.match.impl.MatchState;
 import dev.lrxh.neptune.profile.data.ProfileState;
 import dev.lrxh.neptune.profile.impl.Profile;
+import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -48,16 +49,33 @@ public class ItemListener implements Listener {
 
         if (clickedItem instanceof CustomItem) {
             CustomItem customItem = (CustomItem) clickedItem;
+
+            List<String> consoleCommands = customItem.getConsoleCommands();
+            if (consoleCommands != null && !consoleCommands.isEmpty()) {
+                for (String command : consoleCommands) {
+                    if (command == null) continue;
+                    command = command.trim();
+                    if (command.isEmpty() || command.equalsIgnoreCase("none")) continue;
+
+                    command = command.replace("%player_name%", player.getName());
+
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                }
+            }
+
             List<String> commands = customItem.getCommands();
+            if (commands != null && !commands.isEmpty()) {
+                for (String command : commands) {
+                    if (command == null) continue;
+                    command = command.trim();
+                    if (command.isEmpty() || command.equalsIgnoreCase("none")) continue;
+                    if (command.startsWith("/")) command = command.substring(1);
+                    player.performCommand(command);
+                }
+            }
 
-            if (commands == null || commands.isEmpty()) return;
-
-            for (String command : commands) {
-                if (command == null) continue;
-                command = command.trim();
-                if (command.isEmpty() || command.equalsIgnoreCase("none")) continue;
-                if (command.startsWith("/")) command = command.substring(1);
-                player.performCommand(command);
+            if ((consoleCommands == null || consoleCommands.isEmpty()) && (commands == null || commands.isEmpty())) {
+                return;
             }
         } else {
             clickedItem.getAction().execute(player);
