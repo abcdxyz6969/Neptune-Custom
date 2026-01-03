@@ -26,7 +26,6 @@ public class HotbarService extends IService {
     private final Map<ProfileState, Hotbar> items = new HashMap<>();
     private final Neptune plugin;
 
-    // ✅ Token để bỏ lore line
     private static final String LORE_NONE_TOKEN = "THISLINENONE";
 
     public HotbarService() {
@@ -75,16 +74,12 @@ public class HotbarService extends IService {
     public void load() {
         items.clear();
 
-        // ✅ đảm bảo map có sẵn hotbar cho từng state
         for (ProfileState state : ProfileState.values()) {
             items.put(state, new Hotbar());
         }
 
         FileConfiguration config = ConfigService.get().getHotbarConfig().getConfiguration();
 
-        // ========================
-        // LOAD DEFAULT ITEMS
-        // ========================
         if (config.getConfigurationSection("ITEMS") != null) {
             for (String section : getKeys("ITEMS")) {
 
@@ -102,20 +97,15 @@ public class HotbarService extends IService {
 
                     if (!enabled) continue;
 
-                    // ✅ NEW: detect COMMAND in ITEMS.*
                     List<String> commands = getCommands(config, path);
+                    List<String> consoleCommands = getConsoleCommands(config, path);
 
-                    // Nếu có COMMAND -> tạo CustomItem thay vì ItemAction
-                    if (!commands.isEmpty()) {
-                        // Vì CustomItem gốc của bạn nhận 1 command string, mình nối lại thành 1 chuỗi bằng " | "
-                        // Nhưng vì bạn đã patch CustomItem thành List<String> commands rồi,
-                        // nên mình sẽ tạo CustomItem theo version List<String>.
-                        CustomItem customItem = new CustomItem(displayName, material, lore, slot, commands, customModelData);
+                    if (!commands.isEmpty() || !consoleCommands.isEmpty()) {
+                        CustomItem customItem = new CustomItem(displayName, material, lore, slot, commands, consoleCommands, customModelData);
                         if (slot >= 0 && slot < inventory.getSlots().length) {
                             inventory.setSlot(slot, customItem);
                         }
                     } else {
-                        // default action item (giữ nguyên như gốc)
                         try {
                             Item item = new Item(ItemAction.valueOf(itemName), displayName, material, lore, true, slot, customModelData);
                             if (slot >= 0 && slot < inventory.getSlots().length) {
@@ -130,9 +120,6 @@ public class HotbarService extends IService {
             }
         }
 
-        // ========================
-        // LOAD CUSTOM_ITEMS (root)
-        // ========================
         if (config.getConfigurationSection("CUSTOM_ITEMS") != null) {
             for (String itemName : getKeys("CUSTOM_ITEMS")) {
                 String path = "CUSTOM_ITEMS." + itemName + ".";
@@ -144,17 +131,15 @@ public class HotbarService extends IService {
                 ProfileState profileState = ProfileState.valueOf(config.getString(path + "STATE"));
                 int customModelData = config.getInt(path + "CUSTOM_MODEL_DATA", 0);
 
-                // ✅ NEW: support COMMAND string OR list in CUSTOM_ITEMS too
                 List<String> commands = getCommands(config, path);
+                List<String> consoleCommands = getConsoleCommands(config, path);
 
-                if (commands.isEmpty()) {
-                    // nếu không có command thì không add
+                if (commands.isEmpty() && consoleCommands.isEmpty()) {
                     continue;
                 }
 
-                CustomItem customItem = new CustomItem(displayName, material, lore, slot, commands, customModelData);
+                CustomItem customItem = new CustomItem(displayName, material, lore, slot, commands, consoleCommands, customModelData);
 
-                // đảm bảo state tồn tại
                 if (!items.containsKey(profileState)) {
                     items.put(profileState, new Hotbar());
                 }
@@ -164,7 +149,6 @@ public class HotbarService extends IService {
         }
     }
 
-    // ✅ Lọc lore: bỏ THISLINENONE và bỏ dòng rỗng
     private List<String> filterLore(List<String> lore) {
         if (lore == null) return new ArrayList<>();
 
@@ -182,15 +166,37 @@ public class HotbarService extends IService {
         return filtered;
     }
 
-    // ✅ Read COMMAND:
-    // - COMMAND: "queues"
-    // - COMMAND:
-    //   - queues
-    //   - settings
     private List<String> getCommands(FileConfiguration config, String basePath) {
         List<String> commands = new ArrayList<>();
 
         String cmdPath = basePath + "COMMAND";
+
+        if (config.isString(cmdPath)) {
+            String cmd = config.getString(cmdPath);
+            if (cmd != null) {
+                cmd = cmd.trim();
+                if (!cmd.isEmpty() && !cmd.equalsIgnoreCase("none")) {
+                    commands.add(cmd);
+                }
+            }
+        } else if (config.isList(cmdPath)) {
+            List<String> list = config.getStringList(cmdPath);
+            for (String cmd : list) {
+                if (cmd == null) continue;
+                cmd = cmd.trim();
+                if (cmd.isEmpty()) continue;
+                if (cmd.equalsIgnoreCase("none")) continue;
+                commands.add(cmd);
+            }
+        }
+
+        return commands;
+    }
+
+    private List<String> getConsoleCommands(FileConfiguration config, String basePath) {
+        List<String> commands = new ArrayList<>();
+
+        String cmdPath = basePath + "CONSOLE_COMMAND";
 
         if (config.isString(cmdPath)) {
             String cmd = config.getString(cmdPath);
